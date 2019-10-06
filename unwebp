@@ -1,0 +1,58 @@
+#! /bin/sh
+#
+# Copyright (c) 2019 Marc Espie <espie@openbsd.org>
+# 
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+set -e
+
+verbose=false
+case X"$1" in 
+	"X-v")
+		verbose=true
+		shift
+	;;
+	"X--")
+		shift
+	;;
+esac
+
+temp_dir=$(mktemp -d ${TMPDIR=/tmp}/_webp.XXXXXXXXXX) || exit 1
+trap 'rm -rf $temp_dir' 0 1 2 3 5 10 15
+
+for webpfile in "$@"
+do
+    output=$(dirname "$webpfile")/$(basename "$webpfile" .webp)
+    frames_num=$(webpmux -info "$webpfile"|sed -ne '/Number of frames: */s///p')
+    case "$frames_num" in
+	"") 
+	    if $verbose; then echo "Converting $webpfile to png"; fi
+	    gm convert "$webpfile" "$output.png"
+	;;
+	*)
+	    for i in $(jot $frames_num 1 $frames_num);do
+		case $i in 
+		[0-9])
+		    j="0$i";;
+		*)
+		    j=$i;;
+		esac
+		if $verbose; then echo "Extracting frame #$j from $webpfile"; fi
+		webpmux -get frame $j "$webpfile" -o $temp_dir/$j.webp 2>/dev/null
+		dwebp $temp_dir/$j.webp -o $temp_dir/$j.png 2>/dev/null
+		rm -f $temp_dir/$j.webp
+	    done;
+	    if $verbose; then echo "Converting $webpfile to gif"; fi
+	    gm convert -delay 0 -loop 0 $temp_dir/*.png "$output.gif"
+	    rm -f $temp_dir/*
+    esac
+done
