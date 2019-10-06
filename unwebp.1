@@ -1,0 +1,53 @@
+.\"
+.\" Copyright (c) 2019 Marc Espie <espie@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate$
+.Dt UNWEBP 1
+.Os
+.Sh NAME
+.Nm unwebp
+.Nd convert webp files into gif or png
+.Sh SYNOPSIS
+.Nm unwebp
+.Op Fl v
+.Ar file ...
+.Sh DESCRIPTION
+.Nm
+converts webp files into something decent like gif or png.
+Each
+.Ar file
+passed on the command line is stripped of a .webp extension
+and converted into a file with the proper .gif or .png extension,
+depending on whether it's an animated webp or a static image.
+.Pp
+Non webp files will be left alone, but
+.Nm
+will exit with an error at the end.
+.Pp
+The only option is
+.Fl v
+which prevents
+.Nm
+from being totally silent.
+.Sh BUGS AND LIMITATIONS
+.Nm
+currently does not support webp animations with "shifting" frames
+(where some frames have x/y offsets in the first frame).
+It won't say anything about it, but just produce crap.
+.Sh SEE ALSO
+.Xr gm 1 ,
+.Xr webpmux 1
+.Sh AUTHORS
+.An Marc Espie Aq Mt espie@openbsd.org
