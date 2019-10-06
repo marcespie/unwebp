@@ -16,6 +16,7 @@
 set -e
 
 verbose=false
+rc=0
 case X"$1" in 
 	"X-v")
 		verbose=true
@@ -32,6 +33,12 @@ trap 'rm -rf $temp_dir' 0 1 2 3 5 10 15
 for webpfile in "$@"
 do
     output=$(dirname "$webpfile")/$(basename "$webpfile" .webp)
+    if ! webpmux -info "$webpfile" >/dev/null 2>/dev/null
+    then
+	    echo 2>&1 "$webpfile: not a valid webpfile"
+	    rc=1
+	    continue
+    fi
     frames_num=$(webpmux -info "$webpfile"|sed -ne '/Number of frames: */s///p')
     case "$frames_num" in
 	"") 
@@ -56,3 +63,4 @@ do
 	    rm -f $temp_dir/*
     esac
 done
+exit $rc
