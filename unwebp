@@ -53,12 +53,7 @@ do
 	;;
 	*)
 	    for i in $(jot $frames_num 1 $frames_num);do
-		case $i in 
-		[0-9])
-		    j="0$i";;
-		*)
-		    j=$i;;
-		esac
+	    	j=$(printf "%05d" $i)
 		if $verbose; then echo "Extracting frame #$j from $webpfile"; fi
 		webpmux -get frame $j "$webpfile" -o $temp_dir/$j.webp 2>/dev/null
 		dwebp $temp_dir/$j.webp -o $temp_dir/$j.png 2>/dev/null
