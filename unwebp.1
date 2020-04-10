@@ -21,7 +21,7 @@
 .Nd convert webp files into gif or png
 .Sh SYNOPSIS
 .Nm unwebp
-.Op Fl v
+.Op Fl ve
 .Ar file ...
 .Sh DESCRIPTION
 .Nm
@@ -36,16 +36,11 @@ Non webp files will be left alone, but
 .Nm
 will exit with an error at the end.
 .Pp
-The only option is
+Options are:
+.Fl e
+show the resulting filenames
 .Fl v
-which prevents
-.Nm
-from being totally silent.
-.Sh BUGS AND LIMITATIONS
-.Nm
-currently does not support webp animations with "shifting" frames
-(where some frames have x/y offsets in the first frame).
-It won't say anything about it, but just produce crap.
+show details of the conversion.
 .Sh SEE ALSO
 .Xr gm 1 ,
 .Xr webpmux 1
