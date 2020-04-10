@@ -16,10 +16,15 @@
 set -e
 
 verbose=false
+echo=false
 rc=0
 case X"$1" in 
 	"X-v")
 		verbose=true
+		shift
+	;;
+	"X-e")
+		echo=true
 		shift
 	;;
 	"X--")
@@ -35,7 +40,7 @@ do
     output=$(dirname "$webpfile")/$(basename "$webpfile" .webp)
     if ! webpmux -info "$webpfile" >/dev/null 2>/dev/null
     then
-	    echo 2>&1 "$webpfile: not a valid webpfile"
+	    echo >&2 "$webpfile: not a valid webpfile"
 	    rc=1
 	    continue
     fi
@@ -43,7 +48,8 @@ do
     case "$frames_num" in
 	"") 
 	    if $verbose; then echo "Converting $webpfile to png"; fi
-	    gm convert "$webpfile" "$output.png"
+	    result="$output.png"
+	    gm convert "$webpfile" "$result"
 	;;
 	*)
 	    for i in $(jot $frames_num 1 $frames_num);do
@@ -57,10 +63,24 @@ do
 		webpmux -get frame $j "$webpfile" -o $temp_dir/$j.webp 2>/dev/null
 		dwebp $temp_dir/$j.webp -o $temp_dir/$j.png 2>/dev/null
 		rm -f $temp_dir/$j.webp
+
+		# XXX I won't reuse $@, so I can reset it!
+		set -- $(webpmux -info "$webpfile"|grep "^ *$i:")
+		case $5$6 in
+		00)
+			;;
+		*)
+			width=$(($2+$5))
+			height=$(($3+$6))
+			gm convert -gravity southeast -extent ${width}x$height -background none $temp_dir/$j.png $temp_dir/$j.png
+			;;
+		esac
 	    done;
 	    if $verbose; then echo "Converting $webpfile to gif"; fi
-	    gm convert -delay 0 -loop 0 $temp_dir/*.png "$output.gif"
+	    result="$output.gif"
+	    gm convert -delay 0 -loop 0 $temp_dir/*.png "$result"
 	    rm -f $temp_dir/*
     esac
+    if $echo; then echo "$result"; fi
 done
 exit $rc
