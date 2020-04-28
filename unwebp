@@ -21,6 +21,7 @@ args=`getopt ve $*`
 if [ $? -ne 0 ]
 then
 	echo "Usage: $0 [-ve] [files ...]"
+	exit 2
 fi
 set -e
 set -- $args
