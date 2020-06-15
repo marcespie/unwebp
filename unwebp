@@ -17,8 +17,9 @@
 verbose=false
 echo=false
 force=false
+delete=false
 rc=0
-args=`getopt vef $*`
+args=`getopt edfv $*`
 if [ $? -ne 0 ]
 then
 	echo "Usage: $0 [-efv] [files ...]"
@@ -31,6 +32,10 @@ do
     case "$1" in
 	-v)
 		verbose=true
+		shift
+	;;
+	-d)
+		delete=true
 		shift
 	;;
 	-e)
@@ -68,6 +73,7 @@ do
 	    then
 		if $verbose; then echo "Converting $webpfile to png"; fi
 		gm convert "$webpfile" "$result"
+		if $delete; then rm "$webpfile"; fi
 	    fi
 	;;
 	*)
@@ -96,6 +102,7 @@ do
 		if $verbose; then echo "Converting $webpfile to gif"; fi
 		gm convert -delay 0 -loop 0 $temp_dir/*.png "$result"
 		rm -f $temp_dir/*
+		if $delete; then rm "$webpfile"; fi
 	    fi
     esac
     if $echo; then echo "$result"; fi
