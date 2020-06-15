@@ -21,7 +21,7 @@
 .Nd convert webp files into gif or png
 .Sh SYNOPSIS
 .Nm unwebp
-.Op Fl ve
+.Op Fl efv
 .Ar file ...
 .Sh DESCRIPTION
 .Nm
@@ -39,6 +39,11 @@ will exit with an error at the end.
 Options are:
 .Fl e
 show the resulting filenames
+.Fl f
+force conversion.
+By default,
+.Nm
+will skip files where the result already exists.
 .Fl v
 show details of the conversion.
 .Sh SEE ALSO

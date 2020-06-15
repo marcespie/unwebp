@@ -16,11 +16,12 @@
 
 verbose=false
 echo=false
+force=false
 rc=0
-args=`getopt ve $*`
+args=`getopt vef $*`
 if [ $? -ne 0 ]
 then
-	echo "Usage: $0 [-ve] [files ...]"
+	echo "Usage: $0 [-efv] [files ...]"
 	exit 2
 fi
 set -e
@@ -34,6 +35,10 @@ do
 	;;
 	-e)
 		echo=true
+		shift
+	;;
+    	-f)
+		force=true
 		shift
 	;;
 	--)
@@ -58,34 +63,40 @@ do
     frames_num=$(webpmux -info "$webpfile"|sed -ne '/Number of frames: */s///p')
     case "$frames_num" in
 	"") 
-	    if $verbose; then echo "Converting $webpfile to png"; fi
 	    result="$output.png"
-	    gm convert "$webpfile" "$result"
+	    if ! test -f "$result" || $force
+	    then
+		if $verbose; then echo "Converting $webpfile to png"; fi
+		gm convert "$webpfile" "$result"
+	    fi
 	;;
 	*)
-	    for i in $(jot $frames_num 1 $frames_num);do
-	    	j=$(printf "%05d" $i)
-		if $verbose; then echo "Extracting frame #$j from $webpfile"; fi
-		webpmux -get frame $j "$webpfile" -o $temp_dir/$j.webp 2>/dev/null
-		dwebp $temp_dir/$j.webp -o $temp_dir/$j.png 2>/dev/null
-		rm -f $temp_dir/$j.webp
-
-		# XXX I won't reuse $@, so I can reset it!
-		set -- $(webpmux -info "$webpfile"|grep "^ *$i:")
-		case $5$6 in
-		00)
-			;;
-		*)
-			width=$(($2+$5))
-			height=$(($3+$6))
-			gm convert -gravity southeast -extent ${width}x$height -background none $temp_dir/$j.png $temp_dir/$j.png
-			;;
-		esac
-	    done;
-	    if $verbose; then echo "Converting $webpfile to gif"; fi
 	    result="$output.gif"
-	    gm convert -delay 0 -loop 0 $temp_dir/*.png "$result"
-	    rm -f $temp_dir/*
+	    if ! test -f "$result" || $force
+	    then
+		for i in $(jot $frames_num 1 $frames_num);do
+		    j=$(printf "%05d" $i)
+		    if $verbose; then echo "Extracting frame #$j from $webpfile"; fi
+		    webpmux -get frame $j "$webpfile" -o $temp_dir/$j.webp 2>/dev/null
+		    dwebp $temp_dir/$j.webp -o $temp_dir/$j.png 2>/dev/null
+		    rm -f $temp_dir/$j.webp
+
+		    # XXX I won't reuse $@, so I can reset it!
+		    set -- $(webpmux -info "$webpfile"|grep "^ *$i:")
+		    case $5$6 in
+		    00)
+			    ;;
+		    *)
+			    width=$(($2+$5))
+			    height=$(($3+$6))
+			    gm convert -gravity southeast -extent ${width}x$height -background none $temp_dir/$j.png $temp_dir/$j.png
+			    ;;
+		    esac
+		done;
+		if $verbose; then echo "Converting $webpfile to gif"; fi
+		gm convert -delay 0 -loop 0 $temp_dir/*.png "$result"
+		rm -f $temp_dir/*
+	    fi
     esac
     if $echo; then echo "$result"; fi
 done
