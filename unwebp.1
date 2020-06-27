@@ -21,7 +21,7 @@
 .Nd convert webp files into gif or png
 .Sh SYNOPSIS
 .Nm unwebp
-.Op Fl efv
+.Op Fl defv
 .Ar file ...
 .Sh DESCRIPTION
 .Nm
@@ -37,17 +37,20 @@ Non webp files will be left alone, but
 will exit with an error at the end.
 .Pp
 Options are:
-.Fl d
-delete the source webp file once it's been successfully converted.
-.Fl e
-show the resulting filenames
-.Fl f
-force conversion.
+.Bl -tag -width key
+.It Fl d
+Delete the source webp file once it's been successfully converted.
+Also delete it if conversion was already done.
+.It Fl e
+Show the resulting filenames
+.It Fl f
+Force conversion.
 By default,
 .Nm
 will skip files where the result already exists.
-.Fl v
-show details of the conversion.
+.It Fl v
+Show details of the conversion.
+.El
 .Sh SEE ALSO
 .Xr gm 1 ,
 .Xr webpmux 1
