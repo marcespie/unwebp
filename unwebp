@@ -69,7 +69,7 @@ do
     case "$frames_num" in
 	"") 
 	    result="$output.png"
-	    if ! test -f "$result" || $force
+	    if $force || ! test -f "$result" || test "$result" -ot "$webpfile" 
 	    then
 		if $verbose; then echo "Converting $webpfile to png"; fi
 		gm convert "$webpfile" "$result"
@@ -78,7 +78,7 @@ do
 	;;
 	*)
 	    result="$output.gif"
-	    if ! test -f "$result" || $force
+	    if $force || ! test -f "$result" || test "$result" -ot "$webpfile" 
 	    then
 		for i in $(jot $frames_num 1 $frames_num);do
 		    j=$(printf "%05d" $i)
