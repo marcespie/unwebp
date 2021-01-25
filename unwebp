@@ -80,6 +80,7 @@ do
 	    result="$output.gif"
 	    if $force || ! test -f "$result" || test "$result" -ot "$webpfile" 
 	    then
+	    	duration=0
 		for i in $(jot $frames_num 1 $frames_num);do
 		    j=$(printf "%05d" $i)
 		    if $verbose; then echo "Extracting frame #$j from $webpfile"; fi
@@ -98,9 +99,10 @@ do
 			    gm convert -gravity southeast -extent ${width}x$height -background none $temp_dir/$j.png $temp_dir/$j.png
 			    ;;
 		    esac
+		    duration=$7
 		done;
 		if $verbose; then echo "Converting $webpfile to gif"; fi
-		gm convert -delay 0 -loop 0 $temp_dir/*.png "$result"
+		gm convert -delay $duration -loop 0 $temp_dir/*.png "$result"
 		rm -f $temp_dir/*
 	    fi
 	    if $delete; then rm "$webpfile"; fi
