@@ -99,6 +99,7 @@ do
 			    gm convert -gravity southeast -extent ${width}x$height -background none $temp_dir/$j.png $temp_dir/$j.png
 			    ;;
 		    esac
+		    duration=$7
 		done;
 		if $verbose; then echo "Converting $webpfile to gif"; fi
 		# XXX gm uses delays in 1/100s, whereas webp uses ms
