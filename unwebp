@@ -18,11 +18,13 @@ verbose=false
 echo=false
 force=false
 delete=false
+# for non animated files, default preserves data
+ext=png
 rc=0
-args=`getopt edfv $*`
+args=`getopt edfjv $*`
 if [ $? -ne 0 ]
 then
-	echo "Usage: $0 [-defv] [files ...]"
+	echo "Usage: $0 [-defjv] [files ...]"
 	exit 2
 fi
 set -e
@@ -44,6 +46,10 @@ do
 	;;
     	-f)
 		force=true
+		shift
+	;;
+	-j)
+		ext=jpg
 		shift
 	;;
 	--)
@@ -68,10 +74,10 @@ do
     frames_num=$(webpmux -info "$webpfile"|sed -ne '/Number of frames: */s///p')
     case "$frames_num" in
 	"") 
-	    result="$output.png"
+	    result="$output.$ext"
 	    if $force || ! test -f "$result" || test "$result" -ot "$webpfile" 
 	    then
-		if $verbose; then echo "Converting $webpfile to png"; fi
+		if $verbose; then echo "Converting $webpfile to $ext"; fi
 		gm convert "$webpfile" "$result"
 	    fi
 	    if $delete; then rm "$webpfile"; fi
@@ -83,7 +89,7 @@ do
 	    	duration=0
 		for i in $(jot $frames_num 1 $frames_num);do
 		    j=$(printf "%05d" $i)
-		    if $verbose; then echo "Extracting frame #$j from $webpfile"; fi
+		    if $verbose; then echo "Extracting frame #$j/$frames_num from $webpfile"; fi
 		    webpmux -get frame $j "$webpfile" -o $temp_dir/$j.webp 2>/dev/null
 		    dwebp $temp_dir/$j.webp -o $temp_dir/$j.png 2>/dev/null
 		    rm -f $temp_dir/$j.webp

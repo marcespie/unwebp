@@ -21,7 +21,7 @@
 .Nd convert webp files into gif or png
 .Sh SYNOPSIS
 .Nm unwebp
-.Op Fl defv
+.Op Fl defjv
 .Ar file ...
 .Sh DESCRIPTION
 .Nm
@@ -48,6 +48,8 @@ Force conversion.
 By default,
 .Nm
 will skip files where the result already exists and is newer.
+.It Fl j
+convert non animated webp files to jpeg instead of png.
 .It Fl v
 Show details of the conversion.
 .El
