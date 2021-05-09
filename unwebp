@@ -14,6 +14,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+set -e
 verbose=false
 echo=false
 force=false
@@ -21,43 +22,21 @@ delete=false
 # for non animated files, default preserves data
 ext=png
 rc=0
-args=`getopt edfjv $*`
-if [ $? -ne 0 ]
-then
-	echo "Usage: $0 [-defjv] [files ...]"
-	exit 2
-fi
-set -e
-set -- $args
-while [ $# -ne 0 ]
+while getopts defjv name
 do
-    case "$1" in
-	-v)
-		verbose=true
-		shift
-	;;
-	-d)
-		delete=true
-		shift
-	;;
-	-e)
-		echo=true
-		shift
-	;;
-    	-f)
-		force=true
-		shift
-	;;
-	-j)
-		ext=jpg
-		shift
-	;;
-	--)
-		shift
-		break
+    case "$name" in
+	v)	 verbose=true;;
+	d) 	delete=true;;
+	e) 	echo=true;;
+	f) 	force=true;;
+	j) 	ext=jpg;;
+    	?)
+		echo "Usage: $0 [-defjv] [files ...]"
+		exit 2
 	;;
     esac
 done
+shift $(($OPTIND - 1))
 
 temp_dir=$(mktemp -d ${TMPDIR=/tmp}/_webp.XXXXXXXXXX) || exit 1
 trap 'rm -rf $temp_dir' 0 1 2 3 5 10 15
