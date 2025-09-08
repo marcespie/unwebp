@@ -27,7 +27,7 @@ rc=0
 while getopts adefjmv name
 do
     case "$name" in
-	v)	 verbose=true;;
+	v)	verbose=true;;
 	d) 	delete=true;;
 	e) 	echo=true;;
 	f) 	force=true;;
@@ -95,20 +95,22 @@ do
 		    esac
 		    duration=$7
 		done;
-		if $verbose; then echo "Converting $webpfile to gif"; fi
 		if $movie;
 		then
+		    if $verbose; then echo "Converting $webpfile to mp4"; fi
 		    # we're actually stuck with a set of transparent png
 		    # ffmpeg does not deal with that, but we can do it
 		    # with gm composite mode
 		    for i in $(jot $frames_num 2 $frames_num); do
 		    	j=$(printf "%05d" $i)
 			k=$(printf "%05d" $(( $i - 1)))
+			if $verbose; then echo "handling transparency for frame $j"; fi
 			gm composite $temp_dir/$j.png $temp_dir/$k.png $temp_dir/composed
 			mv $temp_dir/composed $temp_dir/$j.png
 		    done
 		    ffmpeg -f image2 -r $(( 1000 / $duration )) -pattern_type glob -i "$temp_dir/*.png" -vcodec libx264 "$result"
 		else
+		    if $verbose; then echo "Converting $webpfile to gif"; fi
 		# XXX gm uses delays in 1/100s, whereas webp uses ms
 		    gm convert -delay $(( $duration / 10 )) -loop 0 $temp_dir/*.png "$result"
 		fi
