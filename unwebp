@@ -104,11 +104,11 @@ do
 		    for i in $(jot $frames_num 2 $frames_num); do
 		    	j=$(printf "%05d" $i)
 			k=$(printf "%05d" $(( $i - 1)))
-			if $verbose; then echo "handling transparency for frame $j"; fi
+			if $verbose; then echo "handling transparency for frame $j/$frames_num"; fi
 			gm composite $temp_dir/$j.png $temp_dir/$k.png $temp_dir/composed
 			mv $temp_dir/composed $temp_dir/$j.png
 		    done
-		    ffmpeg -f image2 -r $(( 1000 / $duration )) -pattern_type glob -i "$temp_dir/*.png" -vcodec libx264 "$result"
+		    ffmpeg -f image2 -r $(( 1000 / $duration )) -pattern_type glob -i "$temp_dir/*.png" -vcodec libx264 -y "$result"
 		else
 		    if $verbose; then echo "Converting $webpfile to gif"; fi
 		# XXX gm uses delays in 1/100s, whereas webp uses ms
