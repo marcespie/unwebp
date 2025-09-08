@@ -19,10 +19,12 @@ verbose=false
 echo=false
 force=false
 delete=false
+movie=false
+animatedonly=false
 # for non animated files, default preserves data
 ext=png
 rc=0
-while getopts defjv name
+while getopts adefjmv name
 do
     case "$name" in
 	v)	 verbose=true;;
@@ -30,8 +32,10 @@ do
 	e) 	echo=true;;
 	f) 	force=true;;
 	j) 	ext=jpg;;
+	m)	movie=true;;
+	a)	animatedonly=true;;
     	?)
-		echo "Usage: $0 [-defjv] [files ...]"
+		echo "Usage: $0 [-adefjv] [files ...]"
 		exit 2
 	;;
     esac
@@ -53,6 +57,7 @@ do
     frames_num=$(webpmux -info "$webpfile"|sed -ne '/Number of frames: */s///p')
     case "$frames_num" in
 	"") 
+	    if $animatedonly; then continue; fi
 	    result="$output.$ext"
 	    if $force || ! test -f "$result" || test "$result" -ot "$webpfile" 
 	    then
@@ -62,7 +67,11 @@ do
 	    if $delete; then rm "$webpfile"; fi
 	;;
 	*)
-	    result="$output.gif"
+	    if $movie; then
+	    	result="$output.mp4"
+	    else
+		result="$output.gif"
+	    fi
 	    if $force || ! test -f "$result" || test "$result" -ot "$webpfile" 
 	    then
 	    	duration=0
@@ -87,8 +96,22 @@ do
 		    duration=$7
 		done;
 		if $verbose; then echo "Converting $webpfile to gif"; fi
+		if $movie;
+		then
+		    # we're actually stuck with a set of transparent png
+		    # ffmpeg does not deal with that, but we can do it
+		    # with gm composite mode
+		    for i in $(jot $frames_num 2 $frames_num); do
+		    	j=$(printf "%05d" $i)
+			k=$(printf "%05d" $(( $i - 1)))
+			gm composite $temp_dir/$j.png $temp_dir/$k.png $temp_dir/composed
+			mv $temp_dir/composed $temp_dir/$j.png
+		    done
+		    ffmpeg -f image2 -r $(( 1000 / $duration )) -pattern_type glob -i "$temp_dir/*.png" -vcodec libx264 "$result"
+		else
 		# XXX gm uses delays in 1/100s, whereas webp uses ms
-		gm convert -delay $(( $duration / 10 )) -loop 0 $temp_dir/*.png "$result"
+		    gm convert -delay $(( $duration / 10 )) -loop 0 $temp_dir/*.png "$result"
+		fi
 		rm -f $temp_dir/*
 	    fi
 	    if $delete; then rm "$webpfile"; fi

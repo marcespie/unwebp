@@ -21,7 +21,7 @@
 .Nd convert webp files into gif or png
 .Sh SYNOPSIS
 .Nm unwebp
-.Op Fl defjv
+.Op Fl adefjmv
 .Ar file ...
 .Sh DESCRIPTION
 .Nm
@@ -38,6 +38,8 @@ will exit with an error at the end.
 .Pp
 Options are:
 .Bl -tag -width key
+.It Fl a
+Only convert animated webp files.
 .It Fl d
 Delete the source webp file once it's been successfully converted.
 Also delete it if conversion was already done.
@@ -49,7 +51,11 @@ By default,
 .Nm
 will skip files where the result already exists and is newer.
 .It Fl j
-convert non animated webp files to jpeg instead of png.
+Convert non animated webp files to jpeg instead of png.
+.It Fl m
+Convert animated webp files to x264 mp4 instead of gif.
+Requires
+.Xr ffmpeg 1 .
 .It Fl v
 Show details of the conversion.
 .El
