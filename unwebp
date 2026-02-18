@@ -22,20 +22,20 @@ delete=false
 movie=false
 animatedonly=false
 # for non animated files, default preserves data
-ext=png
+picext=png
 rc=0
 while getopts adefjmv name
 do
     case "$name" in
-	v)	verbose=true;;
+	a)	animatedonly=true;;
 	d) 	delete=true;;
 	e) 	echo=true;;
 	f) 	force=true;;
-	j) 	ext=jpg;;
+	j) 	picext=jpg;;
 	m)	movie=true;;
-	a)	animatedonly=true;;
+	v)	verbose=true;;
     	?)
-		echo "Usage: $0 [-adefjv] [files ...]"
+		echo "Usage: $0 [-adefjmv] [files ...]" 1>&2
 		exit 2
 	;;
     esac
@@ -47,7 +47,7 @@ trap 'rm -rf $temp_dir' 0 1 2 3 5 10 15
 
 for webpfile in "$@"
 do
-    output=$(dirname "$webpfile")/$(basename "$webpfile" .webp)
+    stem=$(dirname "$webpfile")/$(basename "$webpfile" .webp)
     if ! webpmux -info "$webpfile" >/dev/null 2>/dev/null
     then
 	    echo >&2 "$webpfile: not a valid webpfile"
@@ -58,66 +58,66 @@ do
     case "$frames_num" in
 	"") 
 	    if $animatedonly; then continue; fi
-	    result="$output.$ext"
-	    if $force || ! test -f "$result" || test "$result" -ot "$webpfile" 
-	    then
-		if $verbose; then echo "Converting $webpfile to $ext"; fi
-		gm convert "$webpfile" "$result"
-	    fi
-	    if $delete; then rm "$webpfile"; fi
-	;;
+	    ext=$picext
+	    ;;
 	*)
 	    if $movie; then
-	    	result="$output.mp4"
+		ext=mp4
 	    else
-		result="$output.gif"
+		ext=gif
 	    fi
-	    if $force || ! test -f "$result" || test "$result" -ot "$webpfile" 
-	    then
-	    	duration=0
-		for i in $(jot $frames_num 1 $frames_num);do
-		    j=$(printf "%05d" $i)
-		    if $verbose; then echo "Extracting frame #$j/$frames_num from $webpfile"; fi
-		    webpmux -get frame $j "$webpfile" -o $temp_dir/$j.webp 2>/dev/null
-		    dwebp $temp_dir/$j.webp -o $temp_dir/$j.png 2>/dev/null
-		    rm -f $temp_dir/$j.webp
+	    ;;
+    esac;
 
-		    # XXX I won't reuse $@, so I can reset it!
-		    set -- $(webpmux -info "$webpfile"|grep "^ *$i:")
-		    case $5$6 in
-		    00)
-			    ;;
-		    *)
-			    width=$(($2+$5))
-			    height=$(($3+$6))
-			    gm convert -gravity southeast -extent ${width}x$height -background none $temp_dir/$j.png $temp_dir/$j.png
-			    ;;
-		    esac
-		    duration=$7
-		done;
-		if $movie;
-		then
-		    if $verbose; then echo "Converting $webpfile to mp4"; fi
-		    # we're actually stuck with a set of transparent png
-		    # ffmpeg does not deal with that, but we can do it
-		    # with gm composite mode
-		    for i in $(jot $frames_num 2 $frames_num); do
-		    	j=$(printf "%05d" $i)
-			k=$(printf "%05d" $(( $i - 1)))
-			if $verbose; then echo "handling transparency for frame $j/$frames_num"; fi
-			gm composite $temp_dir/$j.png $temp_dir/$k.png $temp_dir/composed
-			mv $temp_dir/composed $temp_dir/$j.png
-		    done
-		    ffmpeg -f image2 -r $(( 1000 / $duration )) -pattern_type glob -i "$temp_dir/*.png" -vcodec libx264 -y "$result"
-		else
-		    if $verbose; then echo "Converting $webpfile to gif"; fi
-		# XXX gm uses delays in 1/100s, whereas webp uses ms
-		    gm convert -delay $(( $duration / 10 )) -loop 0 $temp_dir/*.png "$result"
-		fi
-		rm -f $temp_dir/*
-	    fi
-	    if $delete; then rm "$webpfile"; fi
+    output="$stem.$ext"
+    if ! $force && test -f "$output" && test "$output" -nt "$webpfile" 
+    then
+	continue
+    fi
+    if $verbose; then echo "Converting $webpfile to $ext"; fi
+    case $ext in
+    jpg|png)
+	gm convert "$webpfile" "$output";;
+    *)
+	duration=0
+	for i in $(jot $frames_num 1 $frames_num);do
+	    j=$(printf "%05d" $i)
+	    if $verbose; then echo "Extracting frame #$j/$frames_num from $webpfile"; fi
+	    webpmux -get frame $j "$webpfile" -o $temp_dir/$j.webp 2>/dev/null
+	    dwebp $temp_dir/$j.webp -o $temp_dir/$j.png 2>/dev/null
+	    rm -f $temp_dir/$j.webp
+
+	    # XXX I won't reuse $@, so I can reset it!
+	    set -- $(webpmux -info "$webpfile"|grep "^ *$i:")
+	    case $5$6 in
+	    00)
+		;;
+	    *)
+		width=$(($2+$5))
+		height=$(($3+$6))
+		gm convert -gravity southeast -extent ${width}x$height -background none $temp_dir/$j.png $temp_dir/$j.png
+	    esac
+	    duration=$7
+	done
+	if $movie; then
+	    # we're actually stuck with a set of transparent png
+	    # ffmpeg does not deal with that, but we can do it
+	    # with gm composite mode
+	    for i in $(jot $frames_num 2 $frames_num); do
+		j=$(printf "%05d" $i)
+		k=$(printf "%05d" $(( $i - 1)))
+		if $verbose; then echo "handling transparency for frame $j/$frames_num"; fi
+		gm composite $temp_dir/$j.png $temp_dir/$k.png $temp_dir/composed
+		mv $temp_dir/composed $temp_dir/$j.png
+	    done
+	    ffmpeg -f image2 -r $(( 1000 / $duration )) -pattern_type glob -i "$temp_dir/*.png" -vcodec libx264 -y "$output"
+	else
+	# XXX gm uses delays in 1/100s, whereas webp uses ms
+	    gm convert -delay $(( $duration / 10 )) -loop 0 $temp_dir/*.png "$output"
+	fi
+	rm -f $temp_dir/*
     esac
-    if $echo; then echo "$result"; fi
+    if $delete; then rm "$webpfile"; fi
+    if $echo; then echo "$output"; fi
 done
 exit $rc
